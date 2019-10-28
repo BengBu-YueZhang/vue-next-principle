@@ -1,0 +1,3 @@
+- function reactive<T extends object>(target: T): UnwrapNestedRefs<T>, 接受数组或者对象作为参数，会返回经过包装的响应对象
+- function ref<T>(raw: T): Ref<T>, ref可以对非对象（对象也可以）进行包装，返回响应对象
+- function effect<T = any>(fn: () => T, options?: ReactiveEffectOptions): ReactiveEffect<T>，
