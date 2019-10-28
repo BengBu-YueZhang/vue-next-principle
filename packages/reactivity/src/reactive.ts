@@ -131,6 +131,9 @@ export function isReadonly(value: unknown): boolean {
 }
 
 export function toRaw<T>(observed: T): T {
+  // reactiveToRaw是，<代理对象，源对象>，之间的映射，如果存在映射返回原对象
+  // readonlyToRaw是
+  // 直接返回原对象
   return reactiveToRaw.get(observed) || readonlyToRaw.get(observed) || observed
 }
 

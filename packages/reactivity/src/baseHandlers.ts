@@ -49,6 +49,31 @@ function set(
   const hadKey = hasOwn(target, key)
   const result = Reflect.set(target, key, value, receiver)
   // don't trigger if target is something up in the prototype chain of original
+
+  // 这句注释是什么意思？
+  // 举一个例子
+  // const childProxy = new Proxy({
+  //   name: 'Atreus'
+  // }, {
+  //   set(target, key, value, receiver) {
+  //     console.log('触发Atreus的set')
+  //     return Reflect.set(target, key, value, receiver)
+  //   }
+  // })
+  // const parentProxy = new Proxy({
+  //   name: 'Kratos'
+  // }, {
+  //   set(target, key, value, receiver) {
+  //     console.log('触发Kratos的set')
+  //     return Reflect.set(target, key, value, receiver)
+  //   }
+  // })
+  // Object.setPrototypeOf(childProxy, parentProxy)
+  // childProxy.age = 8
+  // 依次触发，Atreus，Kratos的set，但是我们并没有对parentProxy进行set操作
+  // 此时虽然触发了Kratos的set，但是receiver是指向childProxy
+  // 我们可以通过判断`target === toRaw(receiver)`，避免其他原因引起的set操作造成的影响
+
   if (target === toRaw(receiver)) {
     /* istanbul ignore else */
     if (__DEV__) {
