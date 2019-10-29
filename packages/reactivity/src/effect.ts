@@ -37,6 +37,7 @@ export interface DebuggerEventExtraInfo {
   oldTarget?: Map<any, any> | Set<any>
 }
 
+// effect的堆栈
 export const effectStack: ReactiveEffect[] = []
 
 export const ITERATE_KEY = Symbol('iterate')
@@ -53,6 +54,7 @@ export function effect<T = any>(
     fn = fn.raw
   }
   const effect = createReactiveEffect(fn, options)
+  // 如果没有设置lazy选项，或者lazy设置为flase，effect在创建时，需要先执行一遍
   if (!options.lazy) {
     effect()
   }
@@ -73,17 +75,21 @@ function createReactiveEffect<T = any>(
   fn: () => T,
   options: ReactiveEffectOptions
 ): ReactiveEffect<T> {
+
   const effect = function reactiveEffect(...args: unknown[]): unknown {
     return run(effect, fn, args)
   } as ReactiveEffect
-  effect._isEffect = true
+  
+  effect._isEffect = true // 是否为effect函数
   effect.active = true
-  effect.raw = fn
+  effect.raw = fn // effect的callback，第一个参数
+  // effect的options选项
   effect.scheduler = options.scheduler
   effect.onTrack = options.onTrack
   effect.onTrigger = options.onTrigger
   effect.onStop = options.onStop
   effect.computed = options.computed
+  // 🤔️
   effect.deps = []
   return effect
 }
@@ -95,9 +101,13 @@ function run(effect: ReactiveEffect, fn: Function, args: unknown[]): unknown {
   if (!effectStack.includes(effect)) {
     cleanup(effect)
     try {
+      // 将effect添加到effectStack的堆栈中
       effectStack.push(effect)
+      // 执行effect的callback
       return fn(...args)
     } finally {
+      // 🤔️
+      // callback执行完成后，都会清空堆栈
       effectStack.pop()
     }
   }
@@ -159,8 +169,10 @@ export function trigger(
   key?: unknown,
   extraInfo?: DebuggerEventExtraInfo
 ) {
+  // 🤔️通过原对象和targetMap的映射，找到Map<any, Dep>
   const depsMap = targetMap.get(target)
-  if (depsMap === void 0) {
+  if (depsMap === void 0) 
+    // 如果depsMap是undefined, 说明target不是被代理的对象
     // never been tracked
     return
   }
@@ -173,6 +185,8 @@ export function trigger(
     })
   } else {
     // schedule runs for SET | ADD | DELETE
+    // set会触发一次 addRunners
+    // add，delete会触发两次 addRunners
     if (key !== void 0) {
       addRunners(effects, computedRunners, depsMap.get(key))
     }

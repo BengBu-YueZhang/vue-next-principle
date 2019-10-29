@@ -15,12 +15,18 @@ import { makeMap } from '@vue/shared'
 
 export type Dep = Set<ReactiveEffect>
 export type KeyToDepMap = Map<any, Dep>
+
+// <原对象, Map<any, Set<ReactiveEffect>>
 export const targetMap = new WeakMap<any, KeyToDepMap>()
 
 // WeakMaps that store {raw <-> observed} pairs.
+// <原对象，代理对象> 映射
 const rawToReactive = new WeakMap<any, any>()
+// <代理对象，原对象> 映射
 const reactiveToRaw = new WeakMap<any, any>()
+// <原对象，代理对象> 映射
 const rawToReadonly = new WeakMap<any, any>()
+// <代理对象，原对象> 映射
 const readonlyToRaw = new WeakMap<any, any>()
 
 // WeakSets for values that are marked readonly or non-reactive during
@@ -88,6 +94,7 @@ function createReactiveObject(
   baseHandlers: ProxyHandler<any>,
   collectionHandlers: ProxyHandler<any>
 ) {
+  // 如果target不是一个对象，发出警告
   if (!isObject(target)) {
     if (__DEV__) {
       console.warn(`value cannot be made reactive: ${String(target)}`)
@@ -95,11 +102,13 @@ function createReactiveObject(
     return target
   }
   // target already has corresponding Proxy
+  // 如果target已经被代理，直接返回代理对象
   let observed = toProxy.get(target)
   if (observed !== void 0) {
     return observed
   }
   // target is already a Proxy
+  // 如果对象本身就是一个代理对象，直接返回它
   if (toRaw.has(target)) {
     return target
   }
@@ -108,14 +117,17 @@ function createReactiveObject(
     return target
   }
   // 如果`target`是Set, Map, WeakMap, WeakSet。handlers等于collectionHandlers
-  // 否则handlers等于baseHandlers
+  // 否则handlers等于mutableHandlers
   const handlers = collectionTypes.has(target.constructor)
     ? collectionHandlers
     : baseHandlers
   // 对target使用Proxy进行代理
   observed = new Proxy(target, handlers)
+  // rawToReactive，rawToReadonly是<原对象，代理对象>之间的映射
   toProxy.set(target, observed)
+  // reactiveToRaw，readonlyToRaw是<代理对象，原对象>之间的映射
   toRaw.set(observed, target)
+  // targetMap <原对象, Map[]>之间的映射
   if (!targetMap.has(target)) {
     targetMap.set(target, new Map())
   }
@@ -131,8 +143,7 @@ export function isReadonly(value: unknown): boolean {
 }
 
 export function toRaw<T>(observed: T): T {
-  // reactiveToRaw是，<代理对象，源对象>，之间的映射，如果存在映射返回原对象
-  // readonlyToRaw是
+  // reactiveToRaw和readonlyToRaw是，<代理对象，源对象>，之间的映射，如果存在映射返回原对象
   // 直接返回原对象
   return reactiveToRaw.get(observed) || readonlyToRaw.get(observed) || observed
 }

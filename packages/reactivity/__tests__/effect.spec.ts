@@ -21,7 +21,7 @@ describe('reactivity/effect', () => {
     expect(fnSpy).toHaveBeenCalledTimes(1)
   })
 
-  // reactive返回的响应式对象的更新会触发effect的重新执行
+  // reactive返回的响应式对象的更新，会触发effect的重新执行
   it('should observe basic properties', () => {
     let dummy
     const counter = reactive({ num: 0 })
@@ -32,7 +32,7 @@ describe('reactivity/effect', () => {
     expect(dummy).toBe(7)
   })
 
-  // effect会对callback中所有的响应对象的变化，做出响应
+  // effect会对callback中所有的依赖的响应对象的变化，做出响应
   it('should observe multiple properties', () => {
     let dummy
     const counter = reactive({ num1: 0, num2: 0 })
@@ -43,7 +43,7 @@ describe('reactivity/effect', () => {
     expect(dummy).toBe(21)
   })
 
-  // 响应对象，可以使用在多个effect中
+  // 响应对象，可以使用在多个effect中，更新响应对象，会触发多个effect
   it('should handle multiple effects', () => {
     let dummy1, dummy2
     const counter = reactive({ num: 0 })
@@ -79,6 +79,7 @@ describe('reactivity/effect', () => {
     expect(dummy).toBe(undefined)
   })
 
+  // effect会对删除属性后添加属性作出响应
   it('should observe has operations', () => {
     let dummy
     const obj = reactive<{ prop: string | number }>({ prop: 'value' })
@@ -91,15 +92,16 @@ describe('reactivity/effect', () => {
     expect(dummy).toBe(true)
   })
 
+  // 修改原型链上的属性，同样会触发effect
   it('should observe properties on the prototype chain', () => {
     let dummy
     const counter = reactive({ num: 0 })
     const parentCounter = reactive({ num: 2 })
     Object.setPrototypeOf(counter, parentCounter)
     effect(() => (dummy = counter.num))
-
     expect(dummy).toBe(0)
     delete counter.num
+    // parentCounter是counter是原型对象，当删除counter后，num获取的是parentCounter的num属性，所以为2
     expect(dummy).toBe(2)
     parentCounter.num = 4
     expect(dummy).toBe(4)
@@ -107,6 +109,7 @@ describe('reactivity/effect', () => {
     expect(dummy).toBe(3)
   })
 
+  // 删除原型链上的属性同样会触发effect
   it('should observe has operations on the prototype chain', () => {
     let dummy
     const counter = reactive({ num: 0 })

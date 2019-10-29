@@ -27,7 +27,7 @@ export function ref(raw: unknown) {
     return raw
   }
   // 转换为经过reactive包装的响应对象
-  // ⚓️reactive是什么？
+  // 🤔️reactive是什么？
   raw = convert(raw)
   const r = {
     _isRef: true,

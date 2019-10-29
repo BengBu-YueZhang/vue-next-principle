@@ -21,7 +21,7 @@ function createGetter(isReadonly: boolean) {
       return res.value
     }
     // OperationTypes.GET => get
-    // track(target, 'get', key)
+    // 🤔️track(target, 'get', key)，这里应该和effect相关？
     track(target, OperationTypes.GET, key)
     return isObject(res)
       ? isReadonly
@@ -41,11 +41,13 @@ function set(
   receiver: object
 ): boolean {
   value = toRaw(value)
+  // 之前target上的value值
   const oldValue = (target as any)[key]
   if (isRef(oldValue) && !isRef(value)) {
     oldValue.value = value
     return true
   }
+  // 判断key是否存在在target对象上
   const hadKey = hasOwn(target, key)
   const result = Reflect.set(target, key, value, receiver)
   // don't trigger if target is something up in the prototype chain of original
@@ -76,8 +78,13 @@ function set(
 
   if (target === toRaw(receiver)) {
     /* istanbul ignore else */
+    // 判断是否为开发环境
     if (__DEV__) {
       const extraInfo = { oldValue, newValue: value }
+      // 如果key已经存在在target对象上
+      // trigger的第二个参数为，set的操作类型
+      // 如果key之前不存在在target对象上
+      // trigger的第二个参数为，add的操作类型
       if (!hadKey) {
         trigger(target, OperationTypes.ADD, key, extraInfo)
       } else if (hasChanged(value, oldValue)) {
@@ -121,7 +128,7 @@ function ownKeys(target: object): (string | number | symbol)[] {
 }
 
 export const mutableHandlers: ProxyHandler<object> = {
-  get: createGetter(false), // get 拦截
+  get: createGetter(false), // get 拦截，并主动执行createGetter函数
   set, // set 拦截
   deleteProperty, // delete 拦截
   has, // in 拦截

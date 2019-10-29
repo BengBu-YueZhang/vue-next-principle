@@ -139,8 +139,7 @@ describe('reactivity/reactive', () => {
     expect(original.bar).toBe(original2)
   })
 
-  // 使用`toRaw`会取消对响应对象的包装
-  // 取消包装的响应对象，应该直接返回原始值
+  // toRaw会根据响应对象，返回原始值
   test('unwrap', () => {
     const original = { foo: 1 }
     const observed = reactive(original)
@@ -180,7 +179,7 @@ describe('reactivity/reactive', () => {
         `value cannot be made reactive: ${String(value)}`
       ).toHaveBeenWarnedLast()
     }
-    // number, string, boolean, null, undefined, symbol不能成为响应的
+    // number, string, boolean, null, undefined, symbol不能成为响应的对象
     // number
     assertValue(1)
     // string
